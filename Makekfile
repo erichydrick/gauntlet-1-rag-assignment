@@ -1,0 +1,15 @@
+all: compose-up
+
+compose-up: vet
+    docker-compose -f docker-compose.yaml up -d
+
+fmt: 
+    clear
+    go fmt ./...
+
+# I use Podman locally, it's the same thing but different command
+podman-up: vet
+    podman-compose -f docker-compose.yaml up -d
+
+vet: fmt
+    go vet ./...
