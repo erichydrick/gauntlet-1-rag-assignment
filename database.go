@@ -67,7 +67,6 @@ func connectToDatabase() error {
 	}
 
 	var err error
-	fmt.Println("DB at:", dbPath)
 	db, err = sql.Open("libsql", dbPath)
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %v", err)
@@ -165,7 +164,6 @@ func insertChunk(
 	topics []string,
 ) error {
 
-	fmt.Println("Inserting information for document", documentName)
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("could not start transaction to insert document data for %s: %v", documentName, err)
@@ -195,9 +193,7 @@ func insertChunk(
 		}
 	}
 
-	fmt.Println("Committing")
 	tx.Commit()
-	fmt.Println("Wrote embeddings and metadata for", documentName)
 	return nil
 
 }
@@ -270,8 +266,6 @@ func queryForRelevantDocs(ctx context.Context, topics []string) (filenames []str
 func queryForSimilarChunks(ctx context.Context, queryEmbedding []float64, whereClause string, limit int) (hits []vectorResult, resErr error) {
 
 	resErr = nil
-
-	fmt.Println("Searching for relevant chunks")
 
 	rows, err := db.QueryContext(
 		ctx,

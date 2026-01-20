@@ -1,15 +1,21 @@
 all: compose-up
 
-compose-up: vet
-    docker-compose -f docker-compose.yaml up -d
+docker-run:
+    docker build -t gauntlet-1-rag .
+    docker run --rm -d --name=gauntlet-1-rag gauntlet-1-rag
 
 fmt: 
     clear
     go fmt ./...
 
 # I use Podman locally, it's the same thing but different command
-podman-up: vet
-    podman-compose -f docker-compose.yaml up -d
+podman-run:
+    podman build -f Dockerfile -t gauntlet-1-rag .
+    podman run --rm -d -f Dockerfile --name=gauntlet-1-rag gauntlet-1-rag
+
+run: vet
+    go build -o main 
+    ./main
 
 vet: fmt
     go vet ./...

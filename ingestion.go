@@ -33,7 +33,7 @@ var (
 		},
 		"analytics":  {"logi", "symphony", "metrics", "dashboard", "superset"},
 		"security":   {"mfa", "security", "secure", "whitelist", "blacklist", "role", "2fa", "permission", "role", "access", "private", "encrypt", "decrypt", "login", "account", "jwt"},
-		"billing":    {"superbill", "financial", "payment", "invoice", "claim", "insurance", "credit", "check", "cash"},
+		"billing":    {"superbill", "financial", "payment", "invoice", "claim", "insurance", "credit", "bank", "cash"},
 		"scheduling": {"booking", "event", "appointment", "slot", "calendar", "availability"},
 	}
 )
@@ -55,7 +55,6 @@ func chunkText(fullText string) [][]byte {
 
 func ingestData() error {
 
-	fmt.Println("Ingesting documents.")
 	llm, err := embeddingLLM(ctx)
 	if err != nil {
 		return fmt.Errorf("could not load embedding model: %v", err)

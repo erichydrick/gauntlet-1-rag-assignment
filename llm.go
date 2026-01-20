@@ -8,6 +8,20 @@ import (
 )
 
 const (
+	ragEvalulationTemplate = `
+	You are a relevance judge. Determine if the retrieved document is relevant to answering the given question.
+
+	A document is RELEVANT if it contains information that would help answer the question.
+	A document is NOT RELEVANT if it contains no useful information for the question.
+
+	Retrieved document:
+	%s
+
+	Question:
+	%s
+
+	Is this document relevant? Answer "RELEVANT" or "NOT RELEVANT" ONLY.
+	`
 	ragPromptTemplate = `
 		You are a very helpful assistant with access to product documentation that includes designs, requirements, and support information. Your ONLY job is to look up information from these documents and use it to answer questions from developers.
 
@@ -70,6 +84,32 @@ func embeddingLLM(ctx context.Context) (*gollama.Gollama, error) {
 	}
 
 	return embedder, nil
+
+}
+
+func evaluateRetrieval(ctx context.Context, document string, question string) (judgement string, evalErr error) {
+
+	judgement = ""
+	evalErr = nil
+
+	_, err := evaluatorLLM(ctx)
+	if err != nil {
+		evalErr = fmt.Errorf("could not initialize judge llm: %v", err)
+		return
+	}
+	judge.SetTemperature(0).
+		SetTopK(5)
+
+	prompt := fmt.Sprintf(ragEvalulationTemplate, document, question)
+
+	response, err := judge.Chat(ctx, prompt)
+	if err != nil {
+		evalErr = fmt.Errorf("error asking the llm: %v", err)
+		return
+	}
+
+	judgement = response.Content
+	return
 
 }
 

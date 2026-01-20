@@ -26,16 +26,21 @@ func main() {
 	ctx, cancel = signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	fmt.Println("Creating storage schemas...")
 	err := createTables()
 	if err != nil {
 		panic(fmt.Errorf("could not create the tables to use for the RAG pipeline: %v", err))
 	}
 
+	fmt.Println("Ingesting data...")
 	err = ingestData()
 	if err != nil {
 		panic(fmt.Errorf("could not ingest documents: %v", err))
 	}
 
+	fmt.Printf("\n==================================================\n")
+	fmt.Println("Starting application...")
+	fmt.Printf("\n==================================================\n")
 	/* Go until the user quits, we'll run evals later */
 	for true {
 
@@ -53,79 +58,126 @@ func main() {
 			break
 		}
 
-		/* Go ahead and define the output object so we can update it as we go */
-		var queryContext strings.Builder
-		userResponse := output{
-			answer:  "No answers to your question were found.",
-			sources: []string{},
-			filters: []string{},
-		}
+		processQuestion(question, false)
 
-		whereClause := ""
+	}
+	fmt.Printf("\n==================================================\n\n")
+	fmt.Println("Application done...")
+	fmt.Printf("\n==================================================\n")
 
-		userResponse.filters = parseTopics([]byte(question))
-		if len(userResponse.filters) > 0 {
+	// TODO: RUN EVALS
+	fmt.Printf("\n==================================================\n\n")
+	fmt.Println("Starting evaluations...")
+	fmt.Printf("\n==================================================\n")
+	processQuestion("What version of Java are we upgrading to?", true)
+	processQuestion("What is the goal of the booking overhaul?", true)
+	processQuestion("What do we use for SMS?", true)
+	processQuestion("How do providers integrate with Outlook?", true)
+	processQuestion("How do I connect to Elastic Beanstalk?", true)
 
-			userResponse.sources, err = queryForRelevantDocs(ctx, userResponse.filters)
-			if err != nil {
-				panic(fmt.Errorf("could not find subset of documents to query: %v", err))
-			}
+	fmt.Printf("\n\n\nShutting down...\n")
+	closeDatabaseConnection()
+}
 
-			whereClause = "WHERE filename IN ("
-			for _, doc := range userResponse.sources {
-				whereClause += "'" + doc + "',"
-			}
-			whereClause = strings.TrimRight(whereClause, ",") + ")"
+func processQuestion(question string, eval bool) {
 
-		} else {
-			userResponse.sources, err = queryForAllDocs(ctx)
-			if err != nil {
-				panic(fmt.Errorf("could not find all documents for referencing: %v", err))
-			}
-		}
+	/* Go ahead and define the output object so we can update it as we go */
+	var err error
+	var queryContext strings.Builder
+	userResponse := output{
+		answer:  "No answers to your question were found.",
+		sources: []string{},
+		filters: []string{},
+	}
 
-		fmt.Println("Getting the embedding model...")
-		embedder, err := embeddingLLM(ctx)
+	whereClause := ""
+
+	userResponse.filters = parseTopics([]byte(question))
+	if len(userResponse.filters) > 0 {
+
+		userResponse.sources, err = queryForRelevantDocs(ctx, userResponse.filters)
 		if err != nil {
-			panic(fmt.Errorf("error loading the embedder model: %v", err))
-		}
-		fmt.Println("Getting the researcher model...")
-		_, err = researcherLLM(ctx)
-		if err != nil {
-			panic(fmt.Errorf("error loading the researcher model: %v", err))
+			panic(fmt.Errorf("could not find subset of documents to query: %v", err))
 		}
 
-		queryEmbeddings, err := embedder.Embedding(ctx, question)
-		if err != nil {
-			panic(fmt.Errorf("could not create embeddings for the query: %v", err))
+		whereClause = "WHERE filename IN ("
+		for _, doc := range userResponse.sources {
+			whereClause += "'" + doc + "',"
 		}
+		whereClause = strings.TrimRight(whereClause, ",") + ")"
 
-		res, err := queryForSimilarChunks(ctx, queryEmbeddings, whereClause, 10)
+	} else {
+		fmt.Println("No filters - use all docs")
+		userResponse.sources, err = queryForAllDocs(ctx)
 		if err != nil {
-			panic(fmt.Errorf("could not find similar chunks: %v", err))
+			panic(fmt.Errorf("could not find all documents for referencing: %v", err))
 		}
+	}
 
-		if len(res) <= 0 {
-			fmt.Println(userResponse)
-			continue
-		}
-		for _, hit := range res {
-			fmt.Fprintf(&queryContext, "File: %s\nContent: %s\n", hit.filename, hit.content)
-		}
+	fmt.Println("Getting the embedding model...")
+	embedder, err := embeddingLLM(ctx)
+	if err != nil {
+		panic(fmt.Errorf("error loading the embedder model: %v", err))
+	}
+	fmt.Println("Getting the researcher model...")
+	_, err = researcherLLM(ctx)
+	if err != nil {
+		panic(fmt.Errorf("error loading the researcher model: %v", err))
+	}
 
-		llmRes, err := answerQuestion(ctx, queryContext.String(), question)
-		if err != nil {
-			panic(fmt.Errorf("error answering the question: %v", err))
-		}
-		userResponse.answer = llmRes
+	queryEmbeddings, err := embedder.Embedding(ctx, question)
+	if err != nil {
+		panic(fmt.Errorf("could not create embeddings for the query: %v", err))
+	}
+
+	res, err := queryForSimilarChunks(ctx, queryEmbeddings, whereClause, 5)
+	if err != nil {
+		panic(fmt.Errorf("could not find similar chunks: %v", err))
+	}
+
+	/*
+		Checking the database for additional context drew a blank, return with the
+		"nothing found" message
+	*/
+	if len(res) <= 0 {
 		fmt.Println(userResponse)
+		return
+	}
+
+	/*
+		Evaluations get processed by a different model, with different instrcutions
+	*/
+	if eval {
+
+		fmt.Println("*****Evaluating retrieved documents for", question, "*****")
+		for _, hit := range res {
+
+			evalRes, err := evaluateRetrieval(ctx, hit.content, question)
+			if err != nil {
+				panic(fmt.Errorf("error evaluating question %s: %v", question, err))
+			}
+
+			fmt.Println(hit.filename, "snippet -", evalRes)
+
+		}
+		fmt.Printf("****Finished evaluating documents for%s*****\n\n", question)
+		return
 
 	}
 
-	// TODO: RUN EVALS
+	for _, hit := range res {
 
-	fmt.Println("Shutting down...")
-	closeDatabaseConnection()
+		fmt.Fprintf(&queryContext, "File: %s\nContent: %s\n", hit.filename, hit.content)
+
+	}
+
+	llmRes, err := answerQuestion(ctx, queryContext.String(), question)
+	if err != nil {
+		panic(fmt.Errorf("error answering the question: %v", err))
+	}
+	userResponse.answer = llmRes
+	fmt.Println(userResponse)
+
 }
 
 func (o output) String() string {
