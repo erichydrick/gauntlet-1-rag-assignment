@@ -15,26 +15,25 @@ var (
 	//go:embed documents/*.txt
 	documents embed.FS
 
+	// TODO: CHANGE THESE
 	topics map[string][]string = map[string][]string{
 		"support": {
-			"support", "ticket", "freshdesk", "zendesk", "admin", "troubleshoot", "logs", "production queries", "migrate", "migration", "superadmin",
+			"support", "ticket", "freshdesk", "zendesk", "superadmin",
 		},
 		"database": {
-			"queries", "query", "table", "database", "sql",
-		},
-		"architecture": {
-			"architecture", "diagram", "integration", "component", "infrastructure", "dependencies", "integrations", "server", "client", "logging", "aws", "cache",
+			"table", "database", "sql", "mysql",
 		},
 		"development": {
-			"development", "logging", "server", "client", "audit", "config", "function", "method", "java", "javascript", "jquery", "jq", "class", "cache", "ci cd", "build", "engineer", "endpoint",
+			"java", "javascript", "jquery", "jq", "class", "ci cd",
 		},
 		"testing": {
-			"testing", "qa", "automated", "manual", "verify",
+			"testing", "qa",
 		},
-		"analytics":  {"logi", "symphony", "metrics", "dashboard", "superset"},
-		"security":   {"mfa", "security", "secure", "whitelist", "blacklist", "role", "2fa", "permission", "role", "access", "private", "encrypt", "decrypt", "login", "account", "jwt"},
-		"billing":    {"superbill", "financial", "payment", "invoice", "claim", "insurance", "credit", "bank", "cash"},
-		"scheduling": {"booking", "event", "appointment", "slot", "calendar", "availability"},
+		"analytics":    {"logi", "symphony", "metrics"},
+		"security":     {"mfa", "security", "secure", "whitelist", "blacklist", "2fa", "permission", "encrypt", "decrypt", "login", "jwt"},
+		"billing":      {"superbill", "financial", "payment", "invoice", "claim", "insurance"},
+		"scheduling":   {"booking", "event", "appointment", "slot", "calendar", "availability"},
+		"integrations": {"integration", "outlook", "bandwidth", "sms", "twillio"},
 	}
 )
 

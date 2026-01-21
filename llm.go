@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	ragEvalulationTemplate = `
+	ragEvaluationTemplate = `
 	You are a relevance judge. Determine if the retrieved document is relevant to answering the given question.
 
 	A document is RELEVANT if it contains information that would help answer the question.
@@ -20,10 +20,10 @@ const (
 	Question:
 	%s
 
-	Is this document relevant? Answer "RELEVANT" or "NOT RELEVANT" ONLY.
+	Is this document relevant? Answer using "RELEVANT" or "NOT RELEVANT" followed by a brief explanation of why.
 	`
 	ragPromptTemplate = `
-		You are a very helpful assistant with access to product documentation that includes designs, requirements, and support information. Your ONLY job is to look up information from these documents and use it to answer questions from developers.
+		You are a very helpful assistant with access to product documentation that includes designs, requirements, support information, and other information useful to developers working on medical practice management software. Your ONLY job is to look up information from these documents and use it to answer product requirement and support questions from developers.
 
 	You must use ONLY the information below to answer the developer's questions. If you don't have enough information to answer the question, tell the developer you don't know and what information you'd need to provide an answer. The developer can find this additional information offline and update the question later -- DO NOT GUESS.
 
@@ -100,7 +100,7 @@ func evaluateRetrieval(ctx context.Context, document string, question string) (j
 	judge.SetTemperature(0).
 		SetTopK(5)
 
-	prompt := fmt.Sprintf(ragEvalulationTemplate, document, question)
+	prompt := fmt.Sprintf(ragEvaluationTemplate, document, question)
 
 	response, err := judge.Chat(ctx, prompt)
 	if err != nil {

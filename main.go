@@ -32,11 +32,22 @@ func main() {
 		panic(fmt.Errorf("could not create the tables to use for the RAG pipeline: %v", err))
 	}
 
-	fmt.Println("Ingesting data...")
 	err = ingestData()
 	if err != nil {
 		panic(fmt.Errorf("could not ingest documents: %v", err))
 	}
+
+	fmt.Printf("\n==================================================\n\n")
+	fmt.Println("Starting evaluations...")
+	fmt.Printf("\n==================================================\n")
+	processQuestion("What version of Java are we upgrading to?", true)
+	processQuestion("How do we calculate slot availability?", true)
+	processQuestion("What is in the default cancellation email template?", true)
+	processQuestion("Should online booking include support for recurring and ad-hoc timeslots?", true)
+	processQuestion("What best practices should we be following?", true)
+	fmt.Printf("\n==================================================\n\n")
+	fmt.Println("Evaluations complete...")
+	fmt.Printf("\n==================================================\n")
 
 	fmt.Printf("\n==================================================\n")
 	fmt.Println("Starting application...")
@@ -64,16 +75,6 @@ func main() {
 	fmt.Printf("\n==================================================\n\n")
 	fmt.Println("Application done...")
 	fmt.Printf("\n==================================================\n")
-
-	// TODO: RUN EVALS
-	fmt.Printf("\n==================================================\n\n")
-	fmt.Println("Starting evaluations...")
-	fmt.Printf("\n==================================================\n")
-	processQuestion("What version of Java are we upgrading to?", true)
-	processQuestion("What is the goal of the booking overhaul?", true)
-	processQuestion("What do we use for SMS?", true)
-	processQuestion("How do providers integrate with Outlook?", true)
-	processQuestion("How do I connect to Elastic Beanstalk?", true)
 
 	fmt.Printf("\n\n\nShutting down...\n")
 	closeDatabaseConnection()
@@ -149,7 +150,7 @@ func processQuestion(question string, eval bool) {
 	*/
 	if eval {
 
-		fmt.Println("*****Evaluating retrieved documents for", question, "*****")
+		fmt.Printf("\n***** Evaluating retrieved documents for: %s *****\n", question)
 		for _, hit := range res {
 
 			evalRes, err := evaluateRetrieval(ctx, hit.content, question)
@@ -157,10 +158,11 @@ func processQuestion(question string, eval bool) {
 				panic(fmt.Errorf("error evaluating question %s: %v", question, err))
 			}
 
-			fmt.Println(hit.filename, "snippet -", evalRes)
+			fmt.Println(hit.filename, ":", evalRes)
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
 		}
-		fmt.Printf("****Finished evaluating documents for%s*****\n\n", question)
+		fmt.Printf("**** Finished evaluating documents for %s *****\n\n", question)
 		return
 
 	}
