@@ -65,9 +65,9 @@ func ingestData() error {
 		}
 
 		if document.IsDir() {
-			fmt.Println("Skipping directory ", document.Name())
 			return nil
 		}
+
 		fileContents, err := documents.ReadFile("documents/" + document.Name())
 		if err != nil {
 			return fmt.Errorf("could not read file %s: %v", document.Name(), err)

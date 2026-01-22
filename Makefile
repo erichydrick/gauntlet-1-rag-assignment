@@ -1,13 +1,17 @@
-all: run
+all: delete-dbs run
 
-fmt: 
-    clear
-    go fmt ./...
+build: vet
+	go build -o main 
 
-run: vet
-    rm vectors.db*
-    go build -o main 
-    ./main
+delete-dbs:
+	rm vectors.db*
 
-vet: fmt
-    go vet ./...
+fmt:
+	clear
+	go fmt ./...
+
+run: build
+	./main
+
+vet:
+	go vet
