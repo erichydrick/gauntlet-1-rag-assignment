@@ -15,7 +15,6 @@ var (
 	//go:embed documents/*.txt
 	documents embed.FS
 
-	// TODO: CHANGE THESE
 	topics map[string][]string = map[string][]string{
 		"support": {
 			"support", "ticket", "freshdesk", "zendesk", "superadmin",
@@ -24,7 +23,7 @@ var (
 			"table", "database", "sql", "mysql",
 		},
 		"development": {
-			"java", "javascript", "jquery", "jq", "class", "ci cd",
+			"java", "javascript", "jquery", "class", "ci/cd",
 		},
 		"testing": {
 			"testing", "qa",

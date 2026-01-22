@@ -37,18 +37,6 @@ func main() {
 		panic(fmt.Errorf("could not ingest documents: %v", err))
 	}
 
-	fmt.Printf("\n==================================================\n\n")
-	fmt.Println("Starting evaluations...")
-	fmt.Printf("\n==================================================\n")
-	processQuestion("What version of Java are we upgrading to?", true)
-	processQuestion("How do we calculate slot availability?", true)
-	processQuestion("What is in the default cancellation email template?", true)
-	processQuestion("Should online booking include support for recurring and ad-hoc timeslots?", true)
-	processQuestion("What best practices should we be following?", true)
-	fmt.Printf("\n==================================================\n\n")
-	fmt.Println("Evaluations complete...")
-	fmt.Printf("\n==================================================\n")
-
 	fmt.Printf("\n==================================================\n")
 	fmt.Println("Starting application...")
 	fmt.Printf("\n==================================================\n")
@@ -58,18 +46,40 @@ func main() {
 		/* Get the user question */
 		stdInRead := bufio.NewReader(os.Stdin)
 		fmt.Println("Please enter your question. If you're done, just type the phrase 'All done'")
-		question, err := stdInRead.ReadString('\n')
+		userQuestion, err := stdInRead.ReadString('\n')
 		if err != nil {
 			panic(fmt.Errorf("error reading user question: %v", err))
 		}
-		question = strings.TrimSpace(question)
+		userQuestion = strings.TrimSpace(userQuestion)
 
 		/* Check for the end phrase */
-		if strings.ToLower(question) == "all done" {
+		if strings.ToLower(userQuestion) == "all done" {
 			break
 		}
 
-		processQuestion(question, false)
+		processQuestion(userQuestion, false)
+
+		fmt.Println("Would you like to see an evaluation for this question? [y|N] ")
+		runEval, err := stdInRead.ReadString('\n')
+		if err != nil {
+			panic(fmt.Errorf("error checking to see if we should do an evaluation on this question: %v", err))
+		}
+
+		runEval = strings.TrimSpace(runEval)
+		runEval = strings.ToLower(runEval)
+		if runEval == "y" || runEval == "yes" {
+
+			fmt.Printf("\n==================================================\n\n")
+			fmt.Println("Starting evaluations...")
+			fmt.Printf("\n==================================================\n")
+
+			processQuestion(userQuestion, true)
+
+			fmt.Printf("\n==================================================\n")
+			fmt.Println("Evaluations complete...")
+			fmt.Printf("\n==================================================\n")
+
+		}
 
 	}
 	fmt.Printf("\n==================================================\n\n")
